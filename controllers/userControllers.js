@@ -1,8 +1,9 @@
-const bcrypt = require('bcrypjs');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User.js');
 
 module.exports = {
   getAllUsers: (req, res) => {
-    User.find
+    User.find()
       .then((users) => {
         return res.status(200).json(users);
       })
@@ -21,9 +22,9 @@ module.exports = {
             .json({ confirmation: 'fail', message: 'User Not Found' });
         }
       })
-      .catch((err) =>
-        res.json({ confirmation: 'fail', message: 'Server Error' })
-      );
+      .catch(() =>{
+        return res.json({ confirmation: 'fail', message: 'Server Error' })
+      });
   },
   register: (req, res) => {
     const { name, email, password } = req.body;
@@ -50,20 +51,23 @@ module.exports = {
           .then((user) => {
             return res.status(201).json(user);
           })
-          .catch((err) =>
-            res.json({
+          .catch(() => {
+            return res.json({
               confirmation: 'fail',
               message: 'User not saved to database'
             })
-          );
+          });
       })
-      .catch((err) =>
-        res.status(500).json({ confirmation: 'fail', message: 'Server Error' })
-      );
+      .catch(() => {
+        return res.status(500).json({ confirmation: 'fail', message: 'Server Error' })
+      });
   },
   login: (req, res) => {
     User.findOne({ email: req.body.email }).then((user) => {
       if (user) {
+        if (!req.body.password){
+          return res.status(404).json({ message: 'Incorrect Input' });
+        }
         const matchPassword = bcrypt.compareSync(
           req.body.password,
           user.password
@@ -81,7 +85,7 @@ module.exports = {
   },
   updateUser: (req, res) => {
     const id = req.params.id;
-    User.findById()
+    User.findById(id)
       .then((user) => {
         if (!user) {
           return res
@@ -98,14 +102,14 @@ module.exports = {
             .then((user) => {
               return res.status(200).json({ message: 'User Updated', user });
             })
-            .catch((err) =>
-              res.json({ confirmation: 'fail', message: 'User Not Updated' })
-            );
+            .catch((err) => {
+              return res.json({ confirmation: 'fail', message: 'User Not Updated' })
+            });
         }
       })
-      .catch((err) =>
-        res.json({ confirmation: 'fail', message: 'Server Error' })
-      );
+      .catch(() => {
+        return res.json({ confirmation: 'fail', message: 'Server Error' })
+      });
   },
   deleteUser: (req, res) => {
     const id = req.params.id;
